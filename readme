@@ -1,0 +1,366 @@
+Sed
+sed 命令的基本语法如下:
+
+sed [option] [address] command filename
+
+sed 当中几个常用的命令：
+
+s 替换
+d 删除
+a 追加
+i 插入
+c 修改
+替换
+
+sed [option] [address] s/pattern/replacement/flags
+简单的例子如下:
+
+$ cat a.txt
+that is my
+hasd is asd
+$ sed "s/is/my/" a.txt
+that my my
+hasd my asd
+pattern 代表的是正则表达式
+
+$ sed "s/^/#/" sed2 
+#that is my
+#hasd is asd
+replacement 是一个字符串，用来替换与正则表达式匹配的内容。在 replacement 部分，只有下列字符有特殊含义：
+
+& 正则表达式匹配的内容
+\n 匹配第 n 个字符串（n 是数字）
+\ 转义 & 和 \
+$ sed "s/is/[&]/" sed2 
+that [is] my
+hasd [is] asd
+$ cat sed
+This is my cat, my cat's name is betty
+
+$ sed "s/This is my \([^,]*\),.*is \(.*\)/\1:\2/g" sed  
+cat:betty
+flags 是修饰替换的标志，有如下几种情况：
+
+n 1~512 之间的整数，表示替换几次
+g 表示全部替换
+p 打印替换后的内容
+删除
+
+$ cat sed2 
+that is my
+hasd thy asd
+$ sed "/is/d" a.txt
+hasd thy asd
+address
+
+sed 命令可以指定 0-2 个地址，会有如下的规则：
+
+如果没匹配地址，那么命令会应用于每一行。
+如果只有一个地址，那么命令应用于与这个地址匹配的任意行。
+如果指定了由逗号分割的两个地址，那么命令应用于匹配第一个地址的第一行和它后面的行，一直到匹配第二个地址的行（包括此行）。
+如果地址后面带 ! ，那么命令就应该用于不匹配该地址的所有行。
+$ cat sed2 
+that is my
+hasd is asd
+rcx is tc
+wwda srgad sd
+wfecvvd se2d 
+
+$ sed "/asd/,/rcx/! d" sed2
+hasd is asd
+rcx is tc
+
+sed "/asd/! d" sed2      
+hasd is asd
+address 支持的类型如下：
+
+n，数字类型代表第 n 行
+first~step，从第 first 行开始，匹配步长为 step 的行
+$，最后一行
+/regexp/，正则表达式
+addr1,+N，匹配 addr1 和后面的 N 行
+addr1,~N，匹配 addr1 一直到行号是 N 的倍数的行
+$ cat sed2 
+that is my
+hasd is asd
+rcx is tc
+wwda srgad sd
+wfecvvd se2d
+
+$ sed "1d" sed2       
+hasd is asd
+rcx is tc
+wwda srgad sd
+wfecvvd se2d
+
+$ sed "1~2d" sed2 
+hasd is asd
+wwda srgad sd
+
+$ sed "$ d" sed2 
+that is my
+hasd is asd
+rcx is tc
+wwda srgad sd
+
+sed "1,+2 d" sed2     
+wwda srgad sd
+wfecvvd se2d 
+
+$ sed "1,~4 d" sed2  
+wfecvvd se2d 
+追加、插入和更改
+
+$ cat sed2 
+that is my
+hasd is asd
+rcx is tc
+wwda srgad sd
+wfecvvd se2d
+
+sed "/is/i new line" sed2 
+new line
+that is my
+new line
+hasd is asd
+new line
+rcx is tc
+wwda srgad sd
+wfecvvd se2d
+
+$ sed "2 a new line" sed2
+that is my
+hasd is asd
+new line
+rcx is tc
+wwda srgad sd
+wfecvvd se2d 
+
+$ sed "2 c new line" sed2 
+that is my
+new line
+rcx is tc
+wwda srgad sd
+wfecvvd se2d 
+多行匹配
+
+$ cat pets.txt
+This is my cat
+  my cat's name is betty
+This is my dog
+  my dog's name is frank
+This is my fish
+  my fish's name is george
+This is my goat
+  my goat's name is adam
+
+$ sed '1,3s/my/your/g; 3,$s/This/That/g' my.txt
+This is your cat, your cat's name is betty
+This is your dog, your dog's name is frank
+That is your fish, your fish's name is george
+That is my goat, my goat's name is adam
+
+$ sed -e '1,3s/my/your/g' -e '3,$s/This/That/g' my.txt
+分组命令
+
+sed 中使用大括号 {} 将一个地址嵌套在另外一个地址中，或者在相同地址上使用多个命令，看如下例子：
+
+$ cat ca
+.a asdad 4tert
+
+asd line
+.b sdd line
+sd s line
+$ sed '/^\.a/,/^\.b/{/^$/d;s/line/Line/}' ca
+.a asdad 4tert
+asd Line
+.b sdd Line
+sd s line
+Awk
+如下一个简单的 awk 示例：
+
+$ cat a.txt
+Proto Recv-Q Send-Q Local-Address          Foreign-Address             State
+tcp        0      0 0.0.0.0:3306           0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:80             0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:9000         0.0.0.0:*                   LISTEN
+$ awk '{ print "hello world"}' a.txt
+hello world
+hello world
+hello world
+hello world
+其中单引号中的被大括号括着的就是 awk 的语句，只能被单引号包含。
+
+awk 允许你编写两个特殊的例程，分别是与 BEGIN 和 END 相关的过程。并且它们两个是可选的。
+
+可以把 awk 看成三个部分组成：处理输入前将做的处理，处理输入过程中做的处理，处理输入完成后做的处理。
+
+$ awk 'BEGIN {print "begin"} {print $0} END {print "END"}' a.txt
+begin
+Proto Recv-Q Send-Q Local-Address          Foreign-Address             State
+tcp        0      0 0.0.0.0:3306           0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:80             0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:9000         0.0.0.0:*                   LISTEN
+END
+字段
+
+awk 允许使用字段操作符 $ 来指定字段。$1 表示第一个字段，以此类推。$0 表示整行输入记录。
+
+$ awk '{print $1}' awk 
+Proto
+tcp
+tcp
+tcp
+分隔符
+
+可以使用 -F 选项来改变字段分隔符。
+
+$ echo "a##b##c" | awk -F## '{print $1}' 
+a
+$ echo "a##b##c" | awk -F "##" '{print $1}' 
+a
+字段的划分:
+
+设置成一个空格，这种情况记录的前导空白字符和结尾空白字符会被忽略，并且字段用空格或制表来分隔，FS 默认的就是一个空格。
+
+设置成一个单个字符，在这个字符出现的任何地方都将分隔出另外一个字段，如果两个连续的分隔符，在它们之间的字段值为空串。
+
+设置成多个字符，它将被作为一个正则表达式来解释。
+
+$ echo "a##b" | awk -F# '{print $1 "-"  $2 "-" $3}'
+a--b
+
+$ echo "a#b##c###d####e" | awk -F "#+" '{print $1,$2,$3,$4,$5}'      
+a b c d e
+内置变量
+
+变量	解释
+$0	当前记录（这个变量中存放着整个行的内容）
+$1~$n	当前记录的第n个字段，字段间由FS分隔
+FS	输入字段分隔符 默认是空格或Tab
+NF	当前记录中的字段个数，就是有多少列
+NR	已经读出的记录数，就是行号，从1开始，如果有多个文件话，这个值也是不断累加中。
+FNR	当前记录数，与NR不同的是，这个值会是各个文件自己的行号
+RS	输入的记录分隔符， 默认为换行符
+OFS	输出字段分隔符， 默认也是空格
+ORS	输出的记录分隔符，默认为换行符
+FILENAME	当前输入文件的名字
+$ echo "a#b#c#d#e" | awk  'BEGIN {FS="#"} {print $1,$2,$3,$4,$5}'      
+a b c d e
+$ echo "a#b#c#d#e" | awk  'BEGIN {FS = "#";OFS = ","} {print $1,$2,$3,$4,$5}' 
+a,b,c,d,e
+模式匹配
+
+在 awk 读入一行时，它试图匹配脚本中的每一个模式匹配规则。只有与一个特定的模式相匹配的输入行才能成为操作对象。
+
+$ cat awk 
+Proto Recv-Q Send-Q Local-Address          Foreign-Address             State
+tcp        0      0 0.0.0.0:3306           0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:80             0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:9000         0.0.0.0:*                   LISTEN
+$ awk '/LISTEN/ {print $0}' awk 
+tcp        0      0 0.0.0.0:3306           0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:80             0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:9000         0.0.0.0:*                   LISTEN
+我们也可以测试匹配指定的字段，使用 ~ 操作符可以测试一个字段的正则匹配。
+
+$ awk '$6 ~ /LISTEN/ {print $0}' awk 
+tcp        0      0 0.0.0.0:3306           0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:80             0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:9000         0.0.0.0:*                   LISTEN
+关系操作符
+
+操作符	描述
+<	小于
+>	大于
+<=	小于或等于
+>=	大于或等于
+==	相等
+!=	不相等
+~	匹配
+!~	不匹配
+关系表达式可以用在模式中来控制特殊的操作。
+
+$ cat awk1
+name age
+rcx  19
+rcx1 29
+rcx2 27
+$ awk '$2==29 {print $1,$2}' awk1
+rcx1 29
+布尔操作符如下表：
+
+操作符	定义
+｜｜	逻辑或
+&&	逻辑与
+!	逻辑非
+$ awk '$2==29 || NR==1 {print $1,$2}' awk1 
+name age
+rcx1 29
+条件语句
+
+if ( expression ) {
+     action
+ }
+else if (expression2) {
+     action1
+}
+else {
+     action2
+}
+$ cat awk1
+name age
+rcx  19
+rcx1 29
+rcx2 27
+$ awk '{if(NR==2) print $0}' awk1
+rcx  19
+循环
+
+while (condition) {
+     action
+}
+do {
+     action
+} while (condition)
+for (set_counter; test_counter; increment_counter) {
+     action
+}
+for (i = 1; i <= 5; i++) {
+     print i
+}
+$ cat score.txt
+Marry   2143 78 84 77
+Jack    2321 66 78 45
+Tom     2122 48 77 71
+Mike    2537 87 97 95
+Bob     2415 40 57 62
+$ awk '{sum+=$2} END {print sum}' score.txt
+11538
+数组
+
+可以用数组存储一组变量，在 awk 当中不必指明数组的大小。数组的下标可以是字符或数字。
+
+array[name] = "rcx"
+array[1] = "chx"
+循环访问数组
+
+for(var in array) {
+    do action with array[var]
+}
+系统变量数组
+
+awk 中提供的两个系统变量 ARGV 和 ENVIRON 是数组。
+
+ARGV 是一个命令行参数的数组，不包括脚本本身和任何调用 awk 指定的选项，这个数组元素的个数可以从 ARGC 获得。数组第一个元素的下标是 0。
+
+ENVIRON 是一个环境变量数组，数组中每一个元素是当前环境变量的值，下标是环境变量的名字。
+
+$ awk 'BEGIN {for(x=0;x<ARGC;x++) {print ARGV[x]} }' sro 
+awk
+sro
+
+$ a=123
+$ export a
+$ awk 'END {print ENVIRON["a"]}' a.txt
+123
